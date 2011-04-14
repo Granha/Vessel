@@ -3,17 +3,17 @@
 %         r  = radius of the circle
 % @return: matrix with filtered values
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function response=filter_response(im,r)
+function [response eigen_vectors_matrix eigen_values_matrix]=filter_response(im,r)
 
-[m, n] = size(im);
+[M, N] = size(im);
 
-response=zeros(m,n); % allocate response matrix
+response=zeros(M,N); % allocate response matrix
 
 % gaussien filters convoluted with circle step
 dim=25; % some magic number that i don't understand
-h11=conv2(b(n,r),g11(dim),'same'); % gaussien derived in x
-h22=conv2(b(n,r),g22(dim),'same'); % gaussien derived in y
-h12=conv2(b(n,r),g12(dim),'same'); % gaussien derived in x and y
+h11=conv2(b(N,r),g11(dim),'same'); % gaussien derived twice in x
+h22=conv2(b(N,r),g22(dim),'same'); % gaussien derived twice in y
+h12=conv2(b(N,r),g12(dim),'same'); % gaussien derived in x and y
 
 % filter image
 Imf11=conv2(im,h11,'same');
@@ -26,21 +26,40 @@ matrix = zeros(2,2);
 vectors = zeros(2,2);
 values = zeros(2,2);
 
-% calculate response value for each point
-for i = 1:m
-    for j = 1:n
-        eigenvalue(1) = Imf11(i,j);
-        eigenvalue(2) = Imf22(i,j);
+eigen_vectors_matrix = zeros(M,N,2,2);
+eigen_values_matrix = zeros(M,N,2);
 
-	matrix(1,1) = Imf11(i,j);
-	matrix(1,2) = Imf12(i,j);
-	matrix(2,1) = Imf12(i,j);
-	matrix(2,2) = Imf22(i,j);
+eigen_values_sum = 0;
+
+% calculate response value for each point
+for m = 1:M
+    for n = 1:N
+	matrix(1,1) = Imf11(m,n);
+	matrix(1,2) = Imf12(m,n);
+	matrix(2,1) = Imf12(m,n);
+	matrix(2,2) = Imf22(m,n);
+
+	eigen_values_sum = trace(matrix); % filter response
 	
 	[vectors, values] = eig(matrix);
 
-        response_norm = sum(eigenvalue(:))/(2*pi*r); % normalize response
+	% assure that the first element corresponds to the highest eigin value
+	% this is the struture direction
+	if values(2,2) > values(1,1)
+	   higher = 2;
+	   lower  = 1;
+	else
+	  higher = 1;
+	  lower  = 1;
+	end
+	
+	eigen_vectors_matrix(m,n,:,1) = vectors(:,higher);
+	eigen_vectors_matrix(m,n,:,2) = vectors(:,lower);
+	eigen_values_matrix(m,n,1)    = values(higher,higher);
+	eigen_values_matrix(m,n,2)    = values(lower,lower);	
+	
+        response_norm = eigen_values_sum/(2*pi*r); % normalize response
         
-        response(i,j) =  response_norm; % assign in response matrix            
+        response(m,n) =  response_norm; % assign in response matrix            
     end
 end
