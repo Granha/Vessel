@@ -1,11 +1,18 @@
 % clean
+clc;
+clear all;
 close all;
+
+%%%%%%%%%%%%%%
+% parameters
+%%%%%%%%%%%%%%
 
 output_dir = '../results/';
 base_name = 'rectangle';
 out_base = strcat(output_dir, base_name);
 
-noisy = 0;
+noisy = 1;
+noisy_sigma = 1;
 
 % parameters definition
 M = 128;     % image size
@@ -33,12 +40,13 @@ elseif strcmp(base_name, 'yjunc1') % 3D images
   Im = Yjunc1(:,:,round(K/2));
 end
 
+%%%%%%%%%%%%%%%
+%  add noisy
+%%%%%%%%%%%%%%%
 if noisy
   out_base = strcat(out_base,'_noisy');  
-  sigma = 0.1;
-  Im = Im + sigma*randn(size(Im));
+  Im = Im + noisy_sigma*randn(size(Im));
 end
-
 
 % image has two value 0 background and the 
 % structure a constant near 255
@@ -50,6 +58,16 @@ image(Im); colormap(gray);
 print(f_init, '-r80', '-depsc2', strcat(out_base, '_figure.eps'));
 
 [response r_matrix eigen_vectors_matrix eigen_values_matrix] = minimum_response(Im);
+
+% remove noisy  by thresholding filter response
+if  noisy
+  threshold = 0.05*min(response(:)); % threshold: 5% of min
+  [line, column] = find(response > threshold);
+  response(line, column) = 0;
+  r_matrix(line, column) = 0; % remove noisy radius
+  eigen_vectors_matrix(line, column,:,:) = 0; % remove noisy vectors
+  eigen_values_matrix(line, column,:) = 0; % remove noisy eigen values
+end
 
 % show 3D image of filtered response
 f_response = figure
@@ -68,10 +86,12 @@ f_direction = figure
 image(direction); colormap(gray);
 print(f_direction, '-r80', '-depsc2', strcat(out_base, '_direction.eps'));
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%       threshold = 20
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-if 0
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Find best threshold by comparing
+% binarized image to the original one
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if 0 % disable
+
 reconstructed_im = build_vessel(response, 1, MAX);
 
 % show reconstructed image
@@ -93,19 +113,41 @@ print(f_final, '-r80', '-depsc2', strcat(out_base, '_reconstructed.eps'));
 
 end
 
-minimum = 255*local_minimum(response);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%        Find local minimum
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+minimum = local_minimum(response);
+minimum_im = 255*minimum;
 
 f_minimum = figure
-image(minimum); colormap(gray);
+image(minimum_im); colormap(gray);
 print(f_minimum, '-r80', '-depsc2', strcat(out_base, '_centerline.eps'));
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Reconstructed image using centerline
+% and radius    
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+reconstructed_im = 255*reconstruction(minimum, r_matrix);
+f_reconstructed = figure
+image(reconstructed_im); colormap(gray);
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%      Stochastic throwing balls
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 times = 100;
 
+% ball throwing
 ball_count = count_ball(response, times);
 f_ball = figure
 surf(ball_count);
 print(f_ball, '-r80', '-depsc2', strcat(out_base, '_ball_stochastic.eps'));
 
+% ball centerline
 line = 255*(ball_count > 1.5*times*ones(M, N));
 f_ball_centerline = figure;
 image(line); colormap(gray);
