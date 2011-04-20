@@ -4,11 +4,10 @@ function [rec] = reconstruction(minima, radii)
 
 [M, N] = size(minima);
 rec = zeros(M,N);
-[ligne, columne] = find(minima==true);
+[line, column] = find(minima==true);
 
-for m=[ligne(1):ligne(end)]
-  for n=[columne(1):columne(end)]
-    rec = rec | ball(m,n,radii(m,n),M,N);
-  end
+for k = 1:length(line)
+  m = line(k);
+  n = column(k);
+  rec = rec | ball(m,n,radii(m,n),M,N);  
 end
-    
