@@ -9,11 +9,13 @@ function [response eigen_vectors_matrix eigen_values_matrix]=filter_response(im,
 
 response=zeros(M,N); % allocate response matrix
 
+m = (M+1)/2;
+n = (N+1)/2;
 % gaussien filters convoluted with circle step
 dim=25; % some magic number that i don't understand
-h11=conv2(b(N,r),g11(dim),'same'); % gaussien derived twice in x
-h22=conv2(b(N,r),g22(dim),'same'); % gaussien derived twice in y
-h12=conv2(b(N,r),g12(dim),'same'); % gaussien derived in x and y
+h11=conv2(ball(m,n,r,M,N),g11(dim),'same'); % gaussien derived twice in x
+h22=conv2(ball(m,n,r,M,N),g22(dim),'same'); % gaussien derived twice in y
+h12=conv2(ball(m,n,r,M,N),g12(dim),'same'); % gaussien derived in x and y
 
 % filter image
 Imf11=conv2(im,h11,'same');
