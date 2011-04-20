@@ -14,7 +14,6 @@ Im=Tjunc1(:,:,31);
 image(Im); colormap(gray);  %l'affichage
 
 
-
 rl=6; %rayon du cercle LOCAL
 tb = zeros(n,1);
 Q=zeros(2,2);
@@ -39,7 +38,7 @@ for i =1:n
     Q(2,2)=Imf22(centre(1),centre(2));
     
     %la trace normalisee de Q
-    tb(i)= (Q(1,1)+Q(2,2))/(2*3.14159*rl);
+    tb(i)= (Q(1,1)+Q(2,2))/(2*pi*rl);
 end
 % Affichage de l'image test?e et des r?sultats
 figure

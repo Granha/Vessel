@@ -33,14 +33,17 @@ MAX = max(Im(:));
 % show image
 f_init = figure
 image(Im); colormap(gray);
-print(f_init, '-r80', '-depsc2', 'tjunc1.eps')
+print(f_init, '-r80', '-depsc2', 'tjunc1.eps')  
 
-response = minimum_response(Im);
+[response, radii] = minimum_response(Im);
 
 % show 3D image of filtered response
 f_response = figure
 surf(response);
 print(f_response, '-r80', '-depsc2', 'tjunc1_filtered.eps');
+
+f_radii = figure;
+surf(radii);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %       threshold = 20
@@ -67,12 +70,16 @@ print(f_final, '-r80', '-depsc2', 'tjunc1_reconstructed.eps');
 
 end
 
-minimum = zeros(M,N);
+%minima = 255*find_minima(response);
+
+%% Find Minima
+minima = zeros(M,N);
 
 test = zeros(8);
 
-factor = 0.05;
+factor = 0;
 coeff = 1+factor;
+
 
 for m = 1:M
   for n = 1:N
@@ -81,34 +88,41 @@ for m = 1:M
 
     if curr_pixel ~= 0
 
-      test(1) = (m-1 == 0   || response(m-1,n) >= curr_pixel || response(m-1,n) >= coeff*curr_pixel);
-      test(2) = (m+1 == M+1 || response(m+1,n) >= curr_pixel || response(m+1,n) >= coeff*curr_pixel);
-      test(3) = (n-1 == 0   || response(m,n-1) >= curr_pixel || response(m,n-1) >= coeff*curr_pixel);
-      test(4) = (n+1 == N+1 || response(m,n+1) >= curr_pixel || response(m,n+1) >= coeff*curr_pixel);
+      test(1) = (m-1 == 0   || response(m-1,n) <= coeff*curr_pixel);
+      test(2) = (m+1 == M+1 || response(m+1,n) <= coeff*curr_pixel);
+      test(3) = (n-1 == 0   || response(m,n-1) <= coeff*curr_pixel);
+      test(4) = (n+1 == N+1 || response(m,n+1) <= coeff*curr_pixel);
 
-      test(5) = (m-1 == 0   || n-1 == 0   || response(m-1,n-1) >= curr_pixel || response(m-1,n-1) >= coeff*curr_pixel);
-      test(6) = (m+1 == M+1 || n-1 == 0   || response(m+1,n-1) >= curr_pixel || response(m+1,n-1) >= coeff*curr_pixel);
-      test(7) = (m-1 == 0   || n+1 == N+1 || response(m-1,n+1) >= curr_pixel || response(m-1,n+1) >= coeff*curr_pixel);
-      test(8) = (m+1 == M+1 || n+1 == N+1 || response(m+1,n+1) >= curr_pixel || response(m+1,n+1) >= coeff*curr_pixel);
+      test(5) = (m-1 == 0   || n-1 == 0   || response(m-1,n-1) <= coeff*curr_pixel);
+      test(6) = (m+1 == M+1 || n-1 == 0   || response(m+1,n-1) <= coeff*curr_pixel);
+      test(7) = (m-1 == 0   || n+1 == N+1 || response(m-1,n+1) <= coeff*curr_pixel);
+      test(8) = (m+1 == M+1 || n+1 == N+1 || response(m+1,n+1) <= coeff*curr_pixel);
 
-      % all true
+      % all true5
       if sum(test(1:4)) == 4
-        minimum(m,n) = 255;
+        minima(m,n) = true;
       end
     end
   end
 end
 
 f_minimum = figure
-image(minimum); colormap(gray);
+image(255*minima); colormap(gray);
 
+%% Reconstruction
+
+rec = reconstruction(minima, radii);
+f_rec = figure
+image(255*rec); colormap(gray);
 
 times = 100;
 
-ball_count = count_ball(response, times);
-f_ball = figure
-surf(ball_count);
+%% Count balls
 
-line = 255*(ball_count > 1.5*times*ones(M, N));
-figure;
-image(line); colormap(gray);
+% ball_count = count_ball(response, times);
+% f_ball = figure
+% surf(ball_count);
+% 
+% line = 255*(ball_count > 1.5*times*ones(M, N));
+% figure;
+% image(line); colormap(gray);
