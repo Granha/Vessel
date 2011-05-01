@@ -5,6 +5,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [response eigen_vectors_matrix eigen_values_matrix]=filter_response(im,r)
 
+im = im2double(im);
+
 [M, N] = size(im);
 
 response=zeros(M,N); % allocate response matrix
@@ -52,7 +54,7 @@ for m = 1:M
 	   lower  = 1;
 	else
 	  higher = 1;
-	  lower  = 1;
+	  lower  = 2;
 	end
 	
 	eigen_vectors_matrix(m,n,:,1) = vectors(:,higher);
