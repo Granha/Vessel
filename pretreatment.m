@@ -22,11 +22,11 @@ for r=1:iter
   rec2 = recons(rec1, ferm, 'erosion');
   
   figure;
-  image(rec2);
-  colormap(gray(256));
-  imp = rec2;
+  imshow(rec2);
+  title('in pretreatement before thresh');
   drawnow;
-  %pause;
+  
+  imp = rec2;
 end
 
 %% Binarization
