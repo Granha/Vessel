@@ -1,9 +1,18 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [response eigen_vectors_matrix eigen_values_matrix]=filter_response(im,r, metric, filter_type)
 % @param: im = image to be filtered
 %         r  = radius of the circle
-% @return: matrix with filtered values
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [response eigen_vectors_matrix eigen_values_matrix]=filter_response(im,r)
+%         filter_type = 0 OOF
+%                       1 Hessian
+% @return: response = matrix with filtered values
+%          eigen_vectors_matrix = matrix of eigen vectors
+%          eigen_values_matrix = matrix of eigen values
+
+if nargin < 4
+  filter_type = 0; % default OOF
+end
+if nargin < 3
+  metric = 0; % dafault Trace(Q)
+end
 
 im = im2double(im);
 
@@ -13,16 +22,26 @@ response=zeros(M,N); % allocate response matrix
 
 m = (M+1)/2;
 n = (N+1)/2;
-% gaussien filters convoluted with circle step
-dim=25; % some magic number that i don't understand
-h11=conv2(ball(m,n,r,M,N),g11(dim),'same'); % gaussien derived twice in x
-h22=conv2(ball(m,n,r,M,N),g22(dim),'same'); % gaussien derived twice in y
-h12=conv2(ball(m,n,r,M,N),g12(dim),'same'); % gaussien derived in x and y
+
+conv_type = 'same';
+
+if filter_type == 0
+  % gaussien filters convoluted with circle step
+  dim=25; % some magic number that i don't understand
+  h11=conv2(ball(m,n,r,M,N),g11(dim), conv_type); % gaussien derived twice in x
+  h22=conv2(ball(m,n,r,M,N),g22(dim), conv_type); % gaussien derived twice in y
+  h12=conv2(ball(m,n,r,M,N),g12(dim), conv_type); % gaussien derived in x and y
+elseif filter_type == 1
+  dim = 12*r + 25;
+  h11 = g11(dim,r);
+  h22 = g22(dim,r);
+  h12 = g12(dim,r);
+end
 
 % filter image
-Imf11=conv2(im,h11,'same');
-Imf22=conv2(im,h22,'same');
-Imf12=conv2(im,h12,'same');
+Imf11=conv2(im,h11, conv_type);
+Imf22=conv2(im,h22, conv_type);
+Imf12=conv2(im,h12, conv_type);
 
 eigenvalue=zeros(2);
 
@@ -60,7 +79,19 @@ for m = 1:M
 	eigen_vectors_matrix(m,n,:,1) = vectors(:,higher);
 	eigen_vectors_matrix(m,n,:,2) = vectors(:,lower);
 	eigen_values_matrix(m,n,1)    = values(higher,higher);
-	eigen_values_matrix(m,n,2)    = values(lower,lower);	
+	eigen_values_matrix(m,n,2)    = values(lower,lower);
+
+	if values(1) > values(2)
+	  lamb1 = values(1);
+	  lamb2 = values(2);
+	else
+	  lamb1 = values(2);
+	  lamb2 = values(1);
+	end
+
+	if metric == 1
+	  eigen_values_sum = -abs(lamb2)*exp(-1000*abs(lamb1));	
+	end
 	
         response_norm = eigen_values_sum/(2*pi*r); % normalize response
         
