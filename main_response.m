@@ -89,21 +89,21 @@ end
 % structure a constant near 255
 MAX = max(Im(:));
 
-[response r_matrix eigen_vectors_matrix eigen_values_matrix] = minimum_response(Im, 1, 8, 0.5, 1, 1, 0);
+[response r_matrix eigen_vectors_matrix eigen_values_matrix] = minimum_response(Im, 1, 8, 0.5, 1, 0, 0);
 
 [a b c d] = size(eigen_vectors_matrix)
 
 old_resp = response;
 %% remove noisy  by thresholding filter response
-if  noisy && 0
+if  noisy
   response = old_resp;
   threshold = 0.1*min(response(:)); % threshold: 5% of min
   idx = response > threshold;
   response = imhmin(response,-threshold);
   response(idx) = 0;
   r_matrix(idx) = 0; % remove noisy radius
-  eigen_vectors_matrix(idx,:,:) = 0; % remove noisy vectors
-  eigen_values_matrix(idx,:) = 0; % remove noisy eigen
+%  eigen_vectors_matrix(idx,:,:) = 0; % remove noisy vectors
+%  eigen_values_matrix(idx,:) = 0; % remove noisy eigen
                                            % values					 
 %  response = pretreatment(response, 1);  
 end
