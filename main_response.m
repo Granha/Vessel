@@ -108,8 +108,6 @@ if  noisy
 %  response = pretreatment(response, 1);  
 end
 
-[a b c d] = size(eigen_vectors_matrix)
-
 %% show 3D image of filtered response
 f_response = figure;
 surf(response);
@@ -126,7 +124,6 @@ f_radius = figure
 image(aux_r_matrix); colormap(gray);
 title('radius');
 print(f_radius, '-r80', '-djpeg', strcat(out_base, '_radius.jpg'));
-
 
 direction = atan2(eigen_vectors_matrix(:,:,2,1), eigen_vectors_matrix(:,:,1,1) + 0.0001);
 
