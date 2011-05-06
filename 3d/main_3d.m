@@ -19,16 +19,5 @@ end
 
 [M,N,K] = size(Im);
 
-
-
-%% show image
-f_init = figure
-image(Im(:,:,12));colormap(gray);
-title('original image');
-
 [response r_matrix eigen_vectors_matrix eigen_values_matrix] = minimum_response(Im, 4, 6);
 
-%% show 3D image of filtered response
-f_response = figure;
-surf(response);
-title('filter response');
